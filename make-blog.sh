@@ -52,6 +52,9 @@ comment "Load RVM functions."
 
 set -e
 
+comment "mkdir -p ~/local/src"
+all mkdir -p ~/local/src
+
 comment "cd ~/local/src"
 all cd ~/local/src
 
