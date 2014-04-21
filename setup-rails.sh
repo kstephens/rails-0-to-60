@@ -15,8 +15,12 @@ set -e
 cd "$(dirname "$0")"
 
 debian6 comment Add squeeze-backports
-debian6 "sudo cp squeeze-backports.list /etc/apt/sources.list.d/"
+debian6 "sudo cp sources.list.d/$debian_name-backports.list /etc/apt/sources.list.d/"
 debian6 "sudo apt-get update"
+
+ubuntu1204 comment Add Ubuntu 12.04 precise-backports
+ubuntu1204 "sudo cp sources.list.d/$debian_name-backports.list /etc/apt/sources.list.d/"
+ubuntu1204 "sudo apt-get update"
 
 comment Install base ruby.
 debian "sudo apt-get install -y ruby ruby-dev"
@@ -26,7 +30,7 @@ osx comment Check for macports.
 osx 'which port'
 
 comment Install postgres w/ dev libs.
-debian6 'sudo apt-get install -y -t squeeze-backports postgresql-9.1 libpq-dev'
+debian  "sudo apt-get install -y -t $debian_name-backports postgresql-9.1 libpq-dev"
 osx     'sudo port install postgresql91'
 
 comment Install other dev tools.

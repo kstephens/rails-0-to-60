@@ -1,44 +1,11 @@
 #!/bin/bash
 
-server_pid=
-stop_server() {
-  if [ -n "$server_pid" ]
-  then
-    comment Stop rails server.
-    all "kill -9 $server_pid"
-  fi
-  server_pid=
-}
-
-start_server() {
-  comment start rails server.
-  all "bundle exec rails server > server.log 2>&1&"; sleep 2
-  server_pid=$last_pid
-  comment Server pid is $server_pid.
-  echo ""
-}
-
-trap true SIGINT
-trap 'prompt=; stop_server' EXIT
-
 dryrun=:
 prompt=1
 w3m=
 w3m_opts=
 
 eval "$*"
-
-w3m="${w3m:-w3m}"
-browse() {
-  echo -n "${_vt_INV}${_vt_LOW}"
-  echo "| $* |"
-  echo "+----------------------------------------------------------------------"
-  echo "|${_vt_NORM} "
-  ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$@" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
-  echo -n "${_vt_INV}${_vt_LOW}"
-  echo "-----------------------------------------------------------------------"
-  echo -n "${_vt_NORM}"
-}
 
 progdir="$(cd "$(dirname "$0")" && /bin/pwd)"
 source "$progdir/functions.sh"
@@ -106,13 +73,13 @@ all bundle exec rake db:drop:all || true
 comment Create database.
 all bundle exec rake db:create:all
 
-start_server
+start_server "bundle exec rails server"
 
 comment Server Log:
 ok  cat server.log
 
 comment Browse to http://${hostname}:3000/
-all browse http://localhost:3000/
+all browse http://${hostname}:3000/
 
 comment Generate welcome controller.
 all bundle exec rails generate controller welcome index
@@ -124,7 +91,7 @@ comment Remove public/index.html.
 all "rm -f public/index.html"
 
 comment Browse to http://${hostname}:3000/ : Default views/welcome/index.html.erb.
-all "browse http://localhost:3000/"
+all "browse http://${hostname}:3000/"
 
 comment Edit app/views/welcome/index.html.erb.
 all "cat <<EOF > app/views/welcome/index.html.erb
@@ -132,13 +99,13 @@ all "cat <<EOF > app/views/welcome/index.html.erb
 EOF"
 
 comment Browse to http://${hostname}:3000/
-all "browse http://localhost:3000/"
+all "browse http://${hostname}:3000/"
 
 comment Generate posts controller.
 all bundle exec rails g controller posts
 
 comment Browse to http://${hostname}:3000/posts/new: Routing Error
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment View app/controllers/posts_controller.rb
 ok cat app/controllers/posts_controller.rb
@@ -161,7 +128,7 @@ end
 EOF'
 
 comment Browse to http://${hostname}:3000/posts/new: Template is missing
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment Create posts/new view template.
 all 'cat <<EOF > app/views/posts/new.html.erb
@@ -183,7 +150,7 @@ all 'cat <<EOF > app/views/posts/new.html.erb
 EOF'
 
 comment Browse to http://${hostname}:3000/posts/new: Form.
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment Make posts/new view template post to posts#create.
 all 'cat <<EOF > app/views/posts/new.html.erb
@@ -205,7 +172,7 @@ all 'cat <<EOF > app/views/posts/new.html.erb
 EOF'
 
 comment Browse to http://${hostname}:3000/posts/new: Form.
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment Add route for posts/new.
 all 'cat <<EOF > config/routes.rb
@@ -229,7 +196,7 @@ end
 EOF'
 
 comment Submit to http://${hostname}:3000/posts/new: params Hash.
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment Create the Post model.
 all bundle exec rails g model Post title:string text:text
@@ -257,7 +224,7 @@ end
 EOF'
 
 comment Submit to http://${hostname}:3000/posts/new: Routing Error.
-all "browse http://localhost:3000/posts/new"
+all "browse http://${hostname}:3000/posts/new"
 
 comment Add route for posts/new.
 all 'cat <<EOF > config/routes.rb
@@ -352,7 +319,7 @@ all 'cat <<EOF > app/views/posts/index.html.erb
 EOF'
 
 comment Get http://${hostname}:3000/posts: Table of Posts.
-all "browse http://localhost:3000/posts"
+all "browse http://${hostname}:3000/posts"
 
 comment Adding links.
 
@@ -363,7 +330,7 @@ all 'cat <<EOF > app/views/welcome/index.html.erb
 EOF'
 
 comment Get http://${hostname}:3000: My Blog link.
-all "browse http://localhost:3000"
+all "browse http://${hostname}:3000"
 
 comment Link to post/new.
 all 'cat <<EOF > app/views/posts/index.html.erb
@@ -386,7 +353,7 @@ all 'cat <<EOF > app/views/posts/index.html.erb
 EOF'
 
 comment Get http://${hostname}:3000/posts: New post link.
-all "browse http://localhost:3000/posts"
+all "browse http://${hostname}:3000/posts"
 
 comment Link from posts/:id/show to posts/.
 all 'cat <<EOF > app/views/posts/show.html.erb
@@ -402,3 +369,5 @@ all 'cat <<EOF > app/views/posts/show.html.erb
 
 <%= link_to "Posts", action: :index %><br />
 EOF'
+
+comment "ALL DONE!"

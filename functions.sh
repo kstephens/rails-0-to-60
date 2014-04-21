@@ -1,5 +1,9 @@
 source "$progdir/termcode.sh"
 
+vm_ip="$(ifconfig -a | fgrep 'inet addr:192.168.' | cut -d: -f 2 | cut -d' ' -f 1)"
+vm_ip="${remote_ip:-192.168.56.101}" # default vbox host-only IP
+hostname="${hostname:-$vm_ip}"
+
 prompt() {
   if [ -n "$prompt" ]
   then
@@ -81,6 +85,7 @@ in
   *Linux*-6*)
     debian=6
     comment 'Detected Debian 6 (squeeze)'
+    debian_name='squeeze'
   ;;
   *Darwin*)
     osx=1
@@ -91,8 +96,18 @@ in
   ;;
 esac
 
+case "$(cat /etc/issue 2>/dev/null)"
+in
+  *Ubuntu*12.04*)
+    ubuntu=12.04
+    debian=
+    debian_name='precise'
+    comment 'Detected Ubuntu 12.04 (precise pangolin)'
+  ;;
+esac
+
 debian() {
-  if [ -n "$debian" ]
+  if [ -n "$debian" -o -n "$ubuntu" ]
   then
     show_cmd "$@"
     prompt "OK?" "y" &&
@@ -111,6 +126,26 @@ debian6() {
   fi
 }
 
+ubuntu() {
+  if [ "$ubuntu" ]
+  then
+    show_cmd "$@"
+    prompt "OK?" "y" &&
+    $dryrun eval "$@"
+    last_pid=$!
+  fi
+}
+
+ubuntu1204() {
+  if [ "$ubuntu" = 12.04 ]
+  then
+    show_cmd "$@"
+    prompt "OK?" "y" &&
+    $dryrun eval "$@"
+    last_pid=$!
+  fi
+}
+
 osx() {
   if [ -n "$osx" ]
   then
@@ -120,3 +155,40 @@ osx() {
     last_pid=$!
   fi
 }
+
+w3m="${w3m:-w3m}"
+browse() {
+  local url="$1" localhost_url
+  # localhost_url="${url/$vm_ip/localhost}"
+  echo -n "${_vt_INV}${_vt_LOW}"
+  echo "  localhost_url=$localhost_url"
+  echo "| $url |"
+  echo "+----------------------------------------------------------------------"
+  echo "|${_vt_NORM} "
+  ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$localhost_url" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
+  echo -n "${_vt_INV}${_vt_LOW}"
+  echo "-----------------------------------------------------------------------"
+  echo -n "${_vt_NORM}"
+}
+
+server_pid=
+stop_server() {
+  if [ -n "$server_pid" ]
+  then
+    comment Stop server.
+    all "kill -9 $server_pid"
+  fi
+  server_pid=
+}
+
+start_server() {
+  comment Start rails server.
+  all "$* > server.log 2>&1&"; sleep 2
+  server_pid=$last_pid
+  comment Server pid is $server_pid.
+  echo ""
+}
+
+trap true SIGINT
+trap 'prompt=; stop_server' EXIT
+
