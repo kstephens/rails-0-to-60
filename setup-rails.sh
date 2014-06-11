@@ -204,7 +204,7 @@ The libv8 gem installs Google's V8 JavaScript engine.
 The therubyracer gem interfaces to libv8.
 EOF
 all 'gem_check libv8 || gem install libv8'
-all 'gem_check therubyracer || install therubyracer'
+all 'gem_check therubyracer || gem install therubyracer'
 
 comment Install sqlite3 gem.
 notes <<EOF
