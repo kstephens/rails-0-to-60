@@ -8,7 +8,7 @@ w3m_opts=
 eval "$*"
 
 progdir="$(cd "$(dirname "$0")" && /bin/pwd)"
-source "$progdir/functions.sh"
+source "$progdir/lib/functions.sh"
 
 #################################
 
