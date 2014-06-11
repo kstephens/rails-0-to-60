@@ -33,6 +33,7 @@ _vt_DECRC="${_esc}8"		# Restore cursor
 _vt_HOME="${_csi};H"		# Home cursor
 #_vt_EOL="${_csi}70;H"           # Move to End Of Line
 _vt_CLREOL="${_csi}K"		# Clear to eol
+_vt_CLRSCR="${_csi}2J"          # Clear screen and home
 
 # Font modifiers
 _vt_NORM="${_csi}0m"		# Normal text.

@@ -1,3 +1,5 @@
+script_cmd_line="$0 $*"
+
 source "$progdir/termcode.sh"
 
 vm_ip="$(ifconfig -a | fgrep 'inet addr:192.168.' | cut -d: -f 2 | cut -d' ' -f 1)"
@@ -7,6 +9,7 @@ hostname="${hostname:-$vm_ip}"
 prompt() {
   if [ -n "$prompt" ]
   then
+    show_notes
     response=''
     while [ -z "$reponse" ]
     do
@@ -47,13 +50,48 @@ prompt() {
 }
 
 comment() {
-  (set +xe; echo ""; echo " ${_vt_YELLOW}${_vt_UNDER}# ${_dryrun}$*${_vt_NORM}") 2>/dev/null
+  comment="$*"
+  comment_c="${_vt_YELLOW}${_vt_UNDER}$comment${_vt_NORM}"
+  show_comment
+}
+show_comment() {
+  (set +xe; echo ""; echo " # ${_vt_YELLOW}${_dryrun}${_vt_NORM}$comment_c") 2>/dev/null
+  (set +xe; show_notes) 2>/dev/null
 }
 
+set_cmd() {
+  cmd="$ $*"
+  cmd_c="${_vt_HI_GREEN}${cmd}${_vt_NORM}"
+}
+set_cmd "$script_cmd_line"
+
 show_cmd() {
+  set_cmd "$*"
   if [ "$1" != 'comment' ]
   then
-    (set +xe; echo "${_dryrun_c}${_vt_HI_GREEN} $ $*${_vt_NORM}") 2>/dev/null
+    (set +xe; echo "${_dryrun_c}${cmd_c}") 2>/dev/null
+    (set +xe; show_notes) 2>/dev/null
+  fi
+}
+
+notes() {
+  notes="${*:-$(cat -)}"
+}
+show_notes() {
+  if [ -n "$NOTES_TTY" -a -n "$prompt" ]
+  then
+    cat <<EOF >"$NOTES_TTY"
+${_vt_CLRSCR}${_vt_HOME}
+  ===================================================
+
+  comment | ${comment_c}
+      cmd | ${cmd_c}
+
+$notes
+
+  ===================================================
+
+EOF
   fi
 }
 
@@ -106,53 +144,46 @@ in
   ;;
 esac
 
+os_cmd() {
+  show_comment
+  show_cmd "$@"
+  prompt "OK?" "y" &&
+  $dryrun eval "$@"
+  last_pid=$!
+}
+
 debian() {
   if [ -n "$debian" -o -n "$ubuntu" ]
   then
-    show_cmd "$@"
-    prompt "OK?" "y" &&
-    $dryrun eval "$@"
-    last_pid=$!
+    os_cmd "$@"
   fi
 }
 
 debian6() {
   if [ "$debian" = 6 ]
   then
-    show_cmd "$@"
-    prompt "OK?" "y" &&
-    $dryrun eval "$@"
-    last_pid=$!
+    os_cmd "$@"
   fi
 }
 
 ubuntu() {
   if [ "$ubuntu" ]
   then
-    show_cmd "$@"
-    prompt "OK?" "y" &&
-    $dryrun eval "$@"
-    last_pid=$!
+    os_cmd "$@"
   fi
 }
 
 ubuntu1204() {
   if [ "$ubuntu" = 12.04 ]
   then
-    show_cmd "$@"
-    prompt "OK?" "y" &&
-    $dryrun eval "$@"
-    last_pid=$!
+    os_cmd "$@"
   fi
 }
 
 osx() {
   if [ -n "$osx" ]
   then
-    show_cmd "$@"
-    prompt "OK?" "y" &&
-    $dryrun eval "$@"
-    last_pid=$!
+    os_cmd "$@"
   fi
 }
 
@@ -187,6 +218,10 @@ start_server() {
   server_pid=$last_pid
   comment Server pid is $server_pid.
   echo ""
+}
+
+gem_check() {
+  gem which "$@" >/dev/null 2>&1
 }
 
 trap true SIGINT
