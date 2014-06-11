@@ -1,6 +1,6 @@
 script_cmd_line="$0 $*"
 
-source "$progdir/termcode.sh"
+source "$progdir/lib/termcode.sh"
 
 vm_ip="$(ifconfig -a | fgrep 'inet addr:192.168.' | cut -d: -f 2 | cut -d' ' -f 1)"
 vm_ip="${remote_ip:-192.168.56.101}" # default vbox host-only IP
