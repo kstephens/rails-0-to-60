@@ -145,7 +145,6 @@ in
 esac
 
 os_cmd() {
-  show_comment
   show_cmd "$@"
   prompt "OK?" "y" &&
   $dryrun eval "$@"
