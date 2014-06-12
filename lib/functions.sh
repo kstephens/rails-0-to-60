@@ -70,7 +70,7 @@ show_cmd() {
   show_notes 2>/dev/null
   if [ "$1" != 'comment' ]
   then
-    (set +xe; echo "${_dryrun_c}${cmd_c}") 2>/dev/null
+    (set +xe; echo " ${_dryrun_c}${cmd_c}") 2>/dev/null
   fi
 }
 
