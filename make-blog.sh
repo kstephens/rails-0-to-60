@@ -16,6 +16,7 @@ stop_server
 url_port=3000
 url_base="http://${hostname}:${url_port}"
 app_name="blog"
+App_name="Blog"
 rails_database_adapter="postgresql"
 rails_new_options="-d $rails_database_adapter"
 
@@ -57,7 +58,7 @@ notes <<EOF
 
 EOF
 all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get "welcome/index"
   get "posts/new"
   root :to => "welcome\\#index"
@@ -152,7 +153,7 @@ notes <<EOF
 
 EOF
 all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get "welcome/index"
   get "posts/new"
   post "posts" => "posts#create"
@@ -232,7 +233,7 @@ notes <<EOF
 
 EOF
 all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get "welcome/index"
   get  "posts/new"
   post "posts" => "posts#create"
@@ -283,7 +284,7 @@ notes <<EOF
 
 EOF
 all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get "welcome/index"
   get  "posts/new"
   post "posts"     => "posts#create"
@@ -298,7 +299,7 @@ notes <<EOF
 Rails RESTful routes use the "resource" shorthand.
 EOF
 all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get "welcome/index"
   resource :posts
   root :to => "welcome#index"

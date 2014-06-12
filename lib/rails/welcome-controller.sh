@@ -33,7 +33,7 @@ comment Generate welcome controller.
 notes <<EOF
 Rails can generate many files based on standard (or optional) boilerplate.
 
-Generate a controller for a blog post with an "index" action.
+Generate a controller for "welcome" page.
 
 The controller will be named WelcomeController.
 It will have an action method "index".
@@ -47,6 +47,12 @@ Routes are defined in config/routes.rb.
 EOF
 view_file config/routes.rb
 
+comment "rake routes"
+notes <<EOF
+Configured routes can be show by:
+EOF
+all 'bundle exec rake routes'
+
 comment 'Add route for root to welcome#index.'
 notes <<EOF
 The "root" route directs "$url_base/" to the appropriate Controller.
@@ -54,7 +60,7 @@ The "root" route directs "$url_base/" to the appropriate Controller.
 Both "$url_base" and "$url_base/welcome" will be routed to WelcomeController#index.
 EOF
 all "cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
+$App_name::Application.routes.draw do
   get 'welcome/index'
   root :to => 'welcome#index'
 end
