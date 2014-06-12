@@ -27,16 +27,16 @@ prompt() {
         return 1
       ;;
       *sk*)
-        echo "  # skipping..."  1>&2
+        echo "  # Skipping..."  1>&2
         return 1
       ;;
       *sh*)
-        echo "  # starting subshell..."  1>&2
+        echo "  # Starting subshell..."  1>&2
         bash
         response=
       ;;
       *[Qq]*)
-        echo "  # quit!"  1>&2
+        echo "  # QUIT!"  1>&2
         exit 1
       ;;
       *)
