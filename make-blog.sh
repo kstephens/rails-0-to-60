@@ -97,6 +97,19 @@ gem 'therubyracer'
 EOF"
 fi
 
+comment "Other gems."
+notes <<EOF
+  * Newer version of webrick doesn't generate so many warnings.
+  * Disable asset logging.
+EOF
+if ! egrep -sq -e "^gem 'webrick'" Gemfile
+then
+  all "cat <<EOF >> Gemfile
+gem 'webrick', '~> 1.3.0'
+gem 'disable_assets_logger', :group => :development
+EOF"
+fi
+
 comment bundle install
 notes <<EOF
 "bundle install" installs all gems in the Gemfile.
