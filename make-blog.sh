@@ -508,6 +508,20 @@ Blog::Application.routes.draw do
   root :to => "welcome#index"
 end
 EOF'
+cat <<COMMENT >/dev/null
+comment Use RESTful resource routes for posts.
+notes <<EOF
+Rails RESTful routes use the "resource" shorthand.
+EOF
+all 'cat <<EOF > config/routes.rb
+Blog::Application.routes.draw do
+  get "welcome/index"
+  resource :posts
+  root :to => "welcome#index"
+end
+EOF'
+COMMENT
+all 'bundle exec rake routes'
 
 comment Add action method for posts/index.
 notes <<EOF
@@ -671,22 +685,7 @@ EOF
 all POST $url_base/posts "'post[title]=Second Post'" "'post[text]=Lorum Ipsom'" 
 all "browse $url_base/posts"
 
-cat <<COMMENT >/dev/null
-comment Use RESTful resource routes for posts.
-notes <<EOF
-Rails RESTful routes use the "resource" shorthand.
-EOF
-all 'cat <<EOF > config/routes.rb
-Blog::Application.routes.draw do
-  get "welcome/index"
-  resource :posts
-  root :to => "welcome#index"
-end
-EOF'
-COMMENT
-all 'bundle exec rake routes'
-
-comment Link to post.
+comment 'Navigation from /posts #index to /posts/ID #show.'
 notes <<EOF
 Show the Post#id.
 Link to show each Post.
