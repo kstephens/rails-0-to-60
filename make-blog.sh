@@ -608,11 +608,6 @@ all 'cat <<EOF > app/views/posts/index.html.erb
   <% end %>
 </table>
 EOF'
-
-comment Get $url_base/posts: New post link.
-notes <<EOF
-Now it generates new Post form.
-EOF
 all "browse $url_base/posts"
 
 comment Submit New Post
@@ -687,7 +682,6 @@ all "browse $url_base/posts"
 
 comment 'Navigation from /posts #index to /posts/ID #show.'
 notes <<EOF
-Show the Post#id.
 Link to show each Post.
 EOF
 all 'cat <<EOF > app/views/posts/index.html.erb
@@ -716,6 +710,17 @@ all "browse $url_base/posts"
 
 comment Sort posts from newest to oldest.
 notes <<EOF
+Replace:
+
+  def index
+    @posts = Post.all
+  end
+
+With:
+
+  def index
+    @posts = Post.scoped.order("created_at desc")
+  end
 EOF
 all 'cat <<EOF > app/controllers/posts_controller.rb
 class PostsController < ApplicationController
