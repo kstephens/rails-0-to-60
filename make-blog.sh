@@ -141,7 +141,7 @@ comment Setup config/database.yml.
 notes <<EOF
 The database.yml file contains ActiveRecord configuration to connect to the DB.
 EOF
-all "cp $progdir/lib/$app_name/config/database.yml config/"
+all "sed -e 's!@app_name@!$app_name!g' $progdir/lib/rails/config/database.yml >config/database.yml"
 
 notes "---"
 view_file config/database.yml -10
