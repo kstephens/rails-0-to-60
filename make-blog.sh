@@ -15,6 +15,7 @@ stop_server
 
 url_port=3000
 url_base="http://${hostname}:${url_port}"
+app_name="blog"
 
 comment "Follow along in http://edgeguides.rubyonrails.org/getting_started.html"
 
