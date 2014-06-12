@@ -80,18 +80,26 @@ notes() {
 show_notes() {
   if [ -n "$NOTES_TTY" -a -n "$prompt" ]
   then
-    cat <<EOF >"$NOTES_TTY"
-${_vt_CLRSCR}${_vt_HOME}
-  ===================================================
+    local doc="$(cat <<EOF
+
+${_vt_BLUE}
+  NOTES =================================================== ${_vt_NORM}
 
   comment | ${comment_c}
       cmd | ${cmd_c}
 
-$notes
+${_vt_CYAN}$notes
+${_vt_BLUE}  =========================================================${_vt_NORM}
 
-  ===================================================
 
 EOF
+)"
+    if [ "x$last_notes" != "x$doc" ]
+    then
+      last_notes="$doc"
+      [ "$NOTES_TTY" != "$(tty)" ] && echo "${_vt_CLRSCR}${_vt_HOME}"
+      echo "$doc" | tee $NOTES_TTY >/dev/null
+    fi
   fi
 }
 
@@ -188,14 +196,14 @@ osx() {
 
 w3m="${w3m:-w3m}"
 browse() {
-  local url="$1" localhost_url
+  local url="$1" localhost_url="$1"
   # localhost_url="${url/$vm_ip/localhost}"
   echo -n "${_vt_INV}${_vt_LOW}"
-  echo "  localhost_url=$localhost_url"
+  # echo "  localhost_url=$localhost_url"
   echo "| $url |"
   echo "+----------------------------------------------------------------------"
   echo "|${_vt_NORM} "
-  ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$localhost_url" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
+  TERM=ansi ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$localhost_url" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
   echo -n "${_vt_INV}${_vt_LOW}"
   echo "-----------------------------------------------------------------------"
   echo -n "${_vt_NORM}"
@@ -213,7 +221,7 @@ stop_server() {
 
 start_server() {
   comment Start rails server.
-  all "$* > server.log 2>&1&"; sleep 2
+  all "$* > server.log 2>&1 &"; sleep 2
   server_pid=$last_pid
   comment Server pid is $server_pid.
   echo ""
@@ -224,5 +232,5 @@ gem_check() {
 }
 
 trap true SIGINT
-trap 'prompt=; stop_server' EXIT
+trap 'prompt=; stop_server' TERM EXIT
 

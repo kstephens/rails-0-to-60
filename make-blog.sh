@@ -12,6 +12,9 @@ source "$progdir/lib/functions.sh"
 
 #################################
 
+url_port=3000
+url_base="http://${hostname}:${url_port}"
+
 comment "Follow along in http://edgeguides.rubyonrails.org/getting_started.html"
 
 comment "Load RVM functions."
@@ -61,7 +64,26 @@ EOF
   all "rails new blog -d postgresql"
 fi
 
+notes <<EOF
+EOF
 ok  "cd blog"
+
+comment Bundler.
+notes <<EOF
+Rails uses the "bundler" gem.
+The bundler uses the Gemfile to correctly select the required gem versions.
+
+The "bundle" command:
+
+  "bundle exec foo" runs the "foo" command using the gems listed in the Gemfile.
+
+"bundle" is used so often during Rails development,
+  define a few Bash aliases reduce the typing.
+EOF
+ok  "alias b='bundle'"
+ok  "alias be='bundle exec'"
+alias b='bundle'
+alias be='bundle exec'
 
 comment "Add libv8 therubyracer to Gemfile"
 notes <<EOF
@@ -75,27 +97,15 @@ gem 'therubyracer'
 EOF"
 fi
 
-comment View rake targets:
+comment bundle install
 notes <<EOF
-Rails provides a number of rake "tasks" for development support.
-
-Rails requires the bundler gems.
-The bundler gem uses the Gemfile to correctly select the required gem versions.
-"bundle exec rake -T" runs the "rake -T" command using the Gemfile.
-
-"bundle" is used so often a few Bash aliases reduce the typing.
+bundle install" installs all gems in the Gemfile.
 EOF
-all bundle exec rake -T
-
-comment Setup bundle aliases:
-ok  "alias b='bundle'"
-ok  "alias be='bundle exec'"
-alias b='bundle'
-alias be='bundle exec'
+all bundle install
 
 comment Create a blog database user that can create new databases.
 notes <<EOF
-This creates a local PostgreSQL database user named "blog".
+This rake task creates a local PostgreSQL database user named "blog".
 EOF
 if PGHOST=localhost PGUSER=blog PGPASSWORD=blog psql -c 'select 1;' >/dev/null 2>&1
 then
@@ -130,50 +140,75 @@ start_server "bundle exec rails server"
 comment Server Log:
 ok  cat server.log
 
-comment Browse to http://${hostname}:3000/
-all browse http://${hostname}:3000/
+comment Browse to $url_base/
+notes <<EOF
+By default, Rails gives you a Welcome to Rails page.
+EOF
+all browse $url_base/
+
+notes <<EOF
+Rails embraces the REST (Representational State Transfer) design pattern.
+REST actions on data models are represented as HTML GET/POST interactions on resource representations of the data.
+
+The RESTful URLs on a model named "Post":
+
+  GET  /posts/         -- index of Posts.
+  GET  /posts/new      -- new Post form to create.
+  POST /posts/create   -- create a new Post from parameters.
+  GET  /posts/ID       -- show a Post by its ID.
+
+EOF
+show_notes
 
 comment Generate welcome controller.
+notes <<EOF
+Rails can generate many files based on standard (or optional) boilerplate.
+
+Generate a controller for a blog post with an "index" action.
+
+The "index" action will render "/welcome".
+EOF
 all bundle exec rails generate controller welcome index
 
 comment 'Add route for root to welcome#index.'
 notes <<EOF
 A Rails "route" tells the web server how to route URLs to the appropriate Rails Controller.
+
+The "root" route directs "$url_base/" to the appropriate Controller.
 EOF
 all "sed -i -e 's@^ * # root :to@  root :to@' config/routes.rb"
 
 comment Remove public/index.html.
 all "rm -f public/index.html"
 
-comment Browse to http://${hostname}:3000/ : Default views/welcome/index.html.erb.
-all "browse http://${hostname}:3000/"
+comment Browse to $url_base/ : Default views/welcome/index.html.erb.
+all "browse $url_base/"
 
 comment Edit app/views/welcome/index.html.erb.
 notes <<EOF
-
+Change the generate to some static HTML.
 EOF
 all "cat <<EOF > app/views/welcome/index.html.erb
 <h1>Hello, Rails!</h1>
 EOF"
 
-comment Browse to http://${hostname}:3000/
+comment Browse to $url_base/
 notes <<EOF
 
 EOF
-all "browse http://${hostname}:3000/"
+all "browse $url_base/"
 
 comment Generate posts controller.
 notes <<EOF
-Rails can generate many files based on standard (or optional) boilerplate.
-This command generates a controller for a blog post.
+Generates a controller for a blog post.
 EOF
 all bundle exec rails g controller posts
 
-comment Browse to http://${hostname}:3000/posts/new: Routing Error
+comment Browse to $url_base/posts/new: Routing Error
 notes <<EOF
-
+We get a Routing Error because we have not specified a URL route to the Posts controller.
 EOF
-all "browse http://${hostname}:3000/posts/new"
+all "browse $url_base/posts/new"
 
 comment View app/controllers/posts_controller.rb
 notes <<EOF
@@ -204,14 +239,22 @@ class PostsController < ApplicationController
 end
 EOF'
 
-comment Browse to http://${hostname}:3000/posts/new: Template is missing
+comment Browse to $url_base/posts/new: Template is missing
 notes <<EOF
 
 EOF
-all "browse http://${hostname}:3000/posts/new"
+all "browse $url_base/posts/new"
 
 comment Create posts/new view template.
 notes <<EOF
+Use ERB template language for views.
+
+  "<%= {{RUBY}} %>"    -- Evaluate ruby and output the result.
+  "<%  {{RUBY}} %>"    -- Evaluate ruby without the output.
+
+  "form_for" is a Rails view helper that generates HTML <form> blocks and <input> elements.
+
+There are other template languages than can be used with Rails: e.g. HAML, Mustache.
 
 EOF
 all 'cat <<EOF > app/views/posts/new.html.erb
@@ -232,11 +275,11 @@ all 'cat <<EOF > app/views/posts/new.html.erb
 <% end %>
 EOF'
 
-comment Browse to http://${hostname}:3000/posts/new: Form.
+comment Browse to $url_base/posts/new: Form.
 notes <<EOF
 
 EOF
-all "browse http://${hostname}:3000/posts/new"
+all "browse $url_base/posts/new"
 
 comment Make posts/new view template post to posts#create.
 notes <<EOF
@@ -260,8 +303,8 @@ all 'cat <<EOF > app/views/posts/new.html.erb
 <% end %>
 EOF'
 
-comment Browse to http://${hostname}:3000/posts/new: Form.
-all "browse http://${hostname}:3000/posts/new"
+comment Browse to $url_base/posts/new: Form.
+all "browse $url_base/posts/new"
 
 comment Add route for posts/new.
 notes <<EOF
@@ -290,11 +333,11 @@ class PostsController < ApplicationController
 end
 EOF'
 
-comment Submit to http://${hostname}:3000/posts/new: params Hash.
+comment Submit to $url_base/posts/new: params Hash.
 notes <<EOF
 
 EOF
-all "browse http://${hostname}:3000/posts/new"
+all "browse $url_base/posts/new"
 
 comment Create the Post model.
 notes <<EOF
@@ -336,11 +379,11 @@ class PostsController < ApplicationController
 end
 EOF'
 
-comment Submit to http://${hostname}:3000/posts/new: Routing Error.
+comment Submit to $url_base/posts/new: Routing Error.
 notes <<EOF
 
 EOF
-all "browse http://${hostname}:3000/posts/new"
+all "browse $url_base/posts/new"
 
 comment Add route for posts/new.
 notes <<EOF
@@ -358,7 +401,7 @@ EOF'
 
 comment Showing Posts
 notes <<EOF
-
+The "show" action method loads a post by its :id column.
 EOF
 all 'cat <<EOF > app/controllers/posts_controller.rb
 class PostsController < ApplicationController
@@ -410,7 +453,7 @@ EOF'
 
 comment Add action method for posts/index.
 notes <<EOF
-
+The "index" action uses ActiveRecord to load all Posts from the DB.
 EOF
 all 'cat <<EOF > app/controllers/posts_controller.rb
 class PostsController < ApplicationController
@@ -432,7 +475,7 @@ EOF'
 
 comment Create template for posts/index.
 notes <<EOF
-
+Generate a table of all Posts.
 EOF
 all 'cat <<EOF > app/views/posts/index.html.erb
 <h1>Listing posts</h1>
@@ -452,8 +495,8 @@ all 'cat <<EOF > app/views/posts/index.html.erb
 </table>
 EOF'
 
-comment Get http://${hostname}:3000/posts: Table of Posts.
-all "browse http://${hostname}:3000/posts"
+comment Get $url_base/posts: Table of Posts.
+all "browse $url_base/posts"
 
 comment Adding links.
 
@@ -495,15 +538,15 @@ all 'cat <<EOF > app/views/posts/index.html.erb
 </table>
 EOF'
 
-comment Get http://${hostname}:3000/posts: New post link.
+comment Get $url_base/posts: New post link.
 notes <<EOF
-
+Now it generates new Post form.
 EOF
-all "browse http://${hostname}:3000/posts"
+all "browse $url_base/posts"
 
 comment Link from posts/:id/show to posts/.
 notes <<EOF
-
+Add a navigation link back to index action.
 EOF
 all 'cat <<EOF > app/views/posts/show.html.erb
 <p>
@@ -520,3 +563,6 @@ all 'cat <<EOF > app/views/posts/show.html.erb
 EOF'
 
 comment "ALL DONE!"
+prompt "EXIT"
+
+
