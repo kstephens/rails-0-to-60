@@ -112,7 +112,7 @@ comment Setup config/database.yml.
 notes <<EOF
 The database.yml file contains ActiveRecord configuration to connect to the DB.
 EOF
-all cp $progdir/database.yml config/
+all cp $progdir/lib/blog/config/database.yml config/
 ok  head -20 config/database.yml
 
 comment Create database.
