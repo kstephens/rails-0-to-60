@@ -66,7 +66,7 @@ fi
 
 notes <<EOF
 EOF
-ok  "cd blog"
+all  "cd blog"
 
 comment Bundler.
 notes <<EOF
@@ -122,10 +122,9 @@ comment Setup config/database.yml.
 notes <<EOF
 The database.yml file contains ActiveRecord configuration to connect to the DB.
 EOF
-all cp $progdir/lib/blog/config/database.yml config/
-ok  head -20 config/database.yml
+all "cp $progdir/lib/blog/config/database.yml config/; head -20 config/database.yml"
 
-comment Create database.
+comment Drop database.
 all bundle exec rake db:drop:all || true
 
 comment Create database.
@@ -563,6 +562,8 @@ all 'cat <<EOF > app/views/posts/show.html.erb
 EOF'
 
 comment "ALL DONE!"
-prompt "EXIT"
-
+notes <<EOF
+We are finished!
+EOF
+prompt "EXIT?" "y"
 

@@ -56,7 +56,7 @@ comment() {
 }
 show_comment() {
   (set +xe; echo ""; echo " # ${_vt_YELLOW}${_dryrun}${_vt_NORM}$comment_c") 2>/dev/null
-  (set +xe; show_notes) 2>/dev/null
+  show_notes 2>/dev/null
 }
 
 set_cmd() {
@@ -67,10 +67,10 @@ set_cmd "$script_cmd_line"
 
 show_cmd() {
   set_cmd "$*"
+  show_notes 2>/dev/null
   if [ "$1" != 'comment' ]
   then
     (set +xe; echo "${_dryrun_c}${cmd_c}") 2>/dev/null
-    (set +xe; show_notes) 2>/dev/null
   fi
 }
 
@@ -94,9 +94,9 @@ ${_vt_BLUE}  =========================================================${_vt_NORM
 
 EOF
 )"
-    if [ "x$last_notes" != "x$doc" ]
+    if [ "x$_show_notes_prev" != "x$doc" ]
     then
-      last_notes="$doc"
+      _show_notes_prev="$doc"
       [ "$NOTES_TTY" != "$(tty)" ] && echo "${_vt_CLRSCR}${_vt_HOME}"
       echo "$doc" | tee $NOTES_TTY >/dev/null
     fi
