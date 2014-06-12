@@ -1,4 +1,3 @@
-# PostgreSQL. Versions 8.2 and up are supported.
 development:
   adapter: postgresql
   encoding: unicode
@@ -7,6 +6,8 @@ development:
   pool: 5
   username: blog
   password: blog
+
+
 
   #host: localhost
   #port: 5432

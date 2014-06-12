@@ -77,6 +77,7 @@ show_cmd() {
 notes() {
   notes="${*:-$(cat -)}"
 }
+notes_i=0
 show_notes() {
   if [ -n "$NOTES_TTY" -a -n "$prompt" ]
   then
@@ -84,7 +85,6 @@ show_notes() {
 
 ${_vt_BLUE}
   NOTES =================================================== ${_vt_NORM}
-
   comment | ${comment_c}
       cmd | ${cmd_c}
 
@@ -96,9 +96,18 @@ EOF
 )"
     if [ "x$_show_notes_prev" != "x$doc" ]
     then
+      notes_prev="$_show_notes_prev"
       _show_notes_prev="$doc"
-      [ "$NOTES_TTY" != "$(tty)" ] && echo "${_vt_CLRSCR}${_vt_HOME}"
-      echo "$doc" | tee $NOTES_TTY >/dev/null
+      (
+        if [ "$NOTES_TTY" != "$(tty)" ]
+        then
+          echo "${_vt_CLRSCR}${_vt_HOME}"
+          echo "$notes_prev"
+          echo ""
+          echo "${_vt_RED}###################################################${_vt_NORM}"
+        fi
+        echo "$doc"
+      ) | tee $NOTES_TTY >/dev/null
     fi
   fi
 }
@@ -196,20 +205,20 @@ osx() {
 
 w3m="${w3m:-w3m}"
 browse() {
-  local url="$1" localhost_url="$1"
-  # localhost_url="${url/$vm_ip/localhost}"
+  local url="$1" display_url="${2:-$1}"
   echo -n "${_vt_INV}${_vt_LOW}"
   # echo "  localhost_url=$localhost_url"
-  echo "| $url |"
+  echo "| $display_url |"
   echo "+----------------------------------------------------------------------"
   echo "|${_vt_NORM} "
-  TERM=ansi ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$localhost_url" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
+  TERM=ansi ${w3m} ${w3m_opts} -graph -o color=true -o display_link=true "$url" 2>/dev/null | sed -e "s@^@${_vt_INV}|${_vt_NORM}  @"
   echo -n "${_vt_INV}${_vt_LOW}"
   echo "-----------------------------------------------------------------------"
   echo -n "${_vt_NORM}"
 }
 
-server_pid=
+server_pid_file=/tmp/r0260.server.pid
+server_pid="$(cat $server_pid_file 2>/dev/null)"
 stop_server() {
   if [ -n "$server_pid" ]
   then
@@ -217,18 +226,48 @@ stop_server() {
     all "kill -9 $server_pid"
   fi
   server_pid=
+  rm -f $server_pid_file
 }
 
 start_server() {
   comment Start rails server.
-  all "$* > server.log 2>&1 &"; sleep 2
+  all "$* > log/server.log 2>&1 &"; sleep 2
   server_pid=$last_pid
   comment Server pid is $server_pid.
+  echo "$server_pid" > $server_pid_file
+  sleep 3
   echo ""
 }
 
 gem_check() {
   gem which "$@" >/dev/null 2>&1
+}
+
+GET() {
+  browse "$1"
+}
+POST() {
+  local url="$1" params=
+  shift
+  for p in "$@"
+  do
+    params="$params -d '$p'"
+  done
+  eval curl --silent --show-error -L $params "'$url'" > /tmp/$$.html
+  browse /tmp/$$.html "$url"
+  rm /tmp/$$.html
+}
+
+view_file() {
+  local file="$1" cmd="cat"
+  [ -n "$2" ] && cmd="head $2"
+  comment "View $file:"
+  notes <<EOF
+$notes
+
+$($cmd $file)
+EOF
+  ok $cmd $file
 }
 
 trap true SIGINT

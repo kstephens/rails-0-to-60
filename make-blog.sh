@@ -9,6 +9,7 @@ eval "$*"
 
 progdir="$(cd "$(dirname "$0")" && /bin/pwd)"
 source "$progdir/lib/functions.sh"
+stop_server
 
 #################################
 
@@ -55,7 +56,6 @@ lib/           -- Additional support code.
 log/           -- Runtime log files.
 public/        -- Other static assets.
 script/        -- Other development scripts.
-server.log
 test/          -- Test scripts.
 tmp/           -- Temporary files.
 vendor/        -- Locally installed gems and libraries.
@@ -122,22 +122,40 @@ comment Setup config/database.yml.
 notes <<EOF
 The database.yml file contains ActiveRecord configuration to connect to the DB.
 EOF
-all "cp $progdir/lib/blog/config/database.yml config/; head -20 config/database.yml"
+all "cp $progdir/lib/blog/config/database.yml config/"
+
+notes "---"
+view_file config/database.yml -10
 
 comment Drop database.
+notes <<EOF
+Rails databases are configurable for different environments,
+selected by \$RAILS_ENV.
+
+ * development
+ * test
+ * production
+
+"rake db:drop:all" will drop the development and test database.
+EOF
 all bundle exec rake db:drop:all || true
 
 comment Create database.
+notes <<EOF
+"rake db:create:all" will create the development and test database.
+EOF
 all bundle exec rake db:create:all
 
 comment "Start a the rails server."
 notes <<EOF
+Rails will, by default, use the pure Ruby WEBrick web server.
 
+There are others that can work with Rails: Apache, NGINX, Unicorn, etc. 
 EOF
 start_server "bundle exec rails server"
 
-comment Server Log:
-ok  cat server.log
+notes "---"
+view_file log/server.log
 
 comment Browse to $url_base/
 notes <<EOF
@@ -151,9 +169,9 @@ REST actions on data models are represented as HTML GET/POST interactions on res
 
 The RESTful URLs on a model named "Post":
 
-  GET  /posts/         -- index of Posts.
+  GET  /posts           - index of Posts.
   GET  /posts/new      -- new Post form to create.
-  POST /posts/create   -- create a new Post from parameters.
+  POST /posts          -- create a new Post from parameters.
   GET  /posts/ID       -- show a Post by its ID.
 
 EOF
@@ -169,26 +187,47 @@ The "index" action will render "/welcome".
 EOF
 all bundle exec rails generate controller welcome index
 
-comment 'Add route for root to welcome#index.'
 notes <<EOF
 A Rails "route" tells the web server how to route URLs to the appropriate Rails Controller.
 
+Routes are defined in config/routes.rb.
+EOF
+view_file config/routes.rb
+
+comment 'Add route for root to welcome#index.'
+notes <<EOF
 The "root" route directs "$url_base/" to the appropriate Controller.
 EOF
-all "sed -i -e 's@^ * # root :to@  root :to@' config/routes.rb"
+all "cat <<EOF > config/routes.rb
+Blog::Application.routes.draw do
+  get 'welcome/index'
+  root :to => 'welcome#index'
+end
+EOF"
 
 comment Remove public/index.html.
+notes <<EOF
+Rails has a standard public/index.html "Welcome aboard".
+
+It must be removed to render the root route.
+EOF
 all "rm -f public/index.html"
 
 comment Browse to $url_base/ : Default views/welcome/index.html.erb.
+notes <<EOF
+Renders app/views/welcome/index.html.erb ERB template.
+EOF
 all "browse $url_base/"
+
+notes "---"
+view_file app/views/welcome/index.html.erb
 
 comment Edit app/views/welcome/index.html.erb.
 notes <<EOF
 Change the generate to some static HTML.
 EOF
 all "cat <<EOF > app/views/welcome/index.html.erb
-<h1>Hello, Rails!</h1>
+<h1>Welcome to my blog!</h1>
 EOF"
 
 comment Browse to $url_base/
@@ -205,15 +244,11 @@ all bundle exec rails g controller posts
 
 comment Browse to $url_base/posts/new: Routing Error
 notes <<EOF
-We get a Routing Error because we have not specified a URL route to the Posts controller.
+Renders a Routing Error because route to PostsController#new does not exist.
 EOF
 all "browse $url_base/posts/new"
 
-comment View app/controllers/posts_controller.rb
-notes <<EOF
-
-EOF
-ok cat app/controllers/posts_controller.rb
+view_file app/controllers/posts_controller.rb
 
 comment Add route for posts/new.
 notes <<EOF
@@ -240,6 +275,11 @@ EOF'
 
 comment Browse to $url_base/posts/new: Template is missing
 notes <<EOF
+
+If a Controller#action method does not call "render :TEMPLATE_NAME",
+it will automatically "render :ACTION'.
+
+PostsController#new will attempt to render a app/views/posts/new.* template.
 
 EOF
 all "browse $url_base/posts/new"
@@ -320,7 +360,7 @@ EOF'
 
 comment Render input params in posts#create.
 notes <<EOF
-
+Render the POST params as text/plain data.
 EOF
 all 'cat <<EOF > app/controllers/posts_controller.rb
 class PostsController < ApplicationController
@@ -331,16 +371,14 @@ class PostsController < ApplicationController
   end
 end
 EOF'
-
-comment Submit to $url_base/posts/new: params Hash.
-notes <<EOF
-
-EOF
 all "browse $url_base/posts/new"
+all POST $url_base/posts "'post[title]=rails-0-to-60 is AWESOME!'" "'post[text]=https://github.com/kstephens/rails-0-to-60'" 
 
 comment Create the Post model.
 notes <<EOF
+The posts/create action does not store anything yet.
 
+Create an ActiveRecord Model class to be stored in the DB.
 EOF
 all bundle exec rails g model Post title:string text:text
 
@@ -503,9 +541,8 @@ comment Add link to posts on home page.
 notes <<EOF
 
 EOF
-all 'cat <<EOF > app/views/welcome/index.html.erb
-<h1>Hello, Rails!</h1>
-<%= link_to "My Blog", controller: :posts %>
+all 'cat <<EOF >> app/views/welcome/index.html.erb
+<%= link_to "Posts", controller: :posts %>
 EOF'
 
 comment Get http://${hostname}:3000: My Blog link.
@@ -542,6 +579,12 @@ notes <<EOF
 Now it generates new Post form.
 EOF
 all "browse $url_base/posts"
+
+comment Submit New Post
+notes <<EOF
+/posts/create redirects to /posts/:id.
+EOF
+all POST $url_base/posts "'post[title]=rails-0-to-60 is AWESOME!'" "'post[text]=https://github.com/kstephens/rails-0-to-60'" 
 
 comment Link from posts/:id/show to posts/.
 notes <<EOF
