@@ -1,0 +1,26 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  host: 127.0.0.1
+  database: @app_name@_development
+  pool: 5
+  username: @app_name@
+  password: @app_name@
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  host: 127.0.0.1
+  database: @app_name@_test
+  pool: 5
+  username: @app_name@
+  password: @app_name@
+
+production:
+  adapter: postgresql
+  encoding: unicode
+  host: 127.0.0.1
+  database: @app_name@_production
+  pool: 5
+  username: @app_name@
+  password: @app_name@

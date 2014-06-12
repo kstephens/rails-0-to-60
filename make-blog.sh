@@ -16,7 +16,8 @@ stop_server
 url_port=3000
 url_base="http://${hostname}:${url_port}"
 app_name="blog"
-rails_new_options="-d postgresql"
+rails_database_adapter="postgresql"
+rails_new_options="-d $rails_database_adapter"
 
 comment "Follow along in http://edgeguides.rubyonrails.org/getting_started.html"
 
@@ -33,137 +34,8 @@ all mkdir -p ~/local/src
 comment "cd ~/local/src"
 all cd ~/local/src
 
-if ! [ -d $app_name ]
-then
-  comment Create $app_name app.
-  notes <<EOF
-"rails new" creates a new Rails project directory.
-"$rails_new_options" configures the Rails project to use PostgreSQL with ActiveRecord.
-
-This new project directory contains: 
-
-Gemfile        -- List gems and their versions as required by this project/
-Rakefile       -- Top-level "rake" control file.
-README.rdoc    -- Default README.
-app/           -- 
-  assets/         -- Static assets: images, *.js, *.css, etc.
-  controllers/    -- Controllers define how this website interacts.
-  helpers/        -- Support code for controllers and views.
-  mailers/        -- E-Mail support code.
-  models/         -- Define data structures stored in a database.
-  views/          -- Templates to render HTML for browser.
-config/        -- Various configuration files.
-config.ru      -- Web server (Rack) configuration.
-db/            -- Database support: schema definitions/migrations.
-doc/
-lib/           -- Additional support code.
-log/           -- Runtime log files.
-public/        -- Other static assets.
-script/        -- Other development scripts.
-test/          -- Test scripts.
-tmp/           -- Temporary files.
-vendor/        -- Locally installed gems and libraries.
-
-EOF
-  all "rails new $app_name $rails_new_options"
-fi
-
-notes <<EOF
-EOF
-all  "cd $app_name"
-
-comment Bundler.
-notes <<EOF
-Rails uses the "bundler" gem.
-The bundler uses the Gemfile to correctly select the required gem versions.
-
-The "bundle" command:
-
-  "bundle exec foo" runs the "foo" command using the gems listed in the Gemfile.
-
-"bundle" is used so often during Rails development,
-  define a few Bash aliases reduce the typing.
-EOF
-ok  "alias b='bundle'"
-ok  "alias be='bundle exec'"
-alias b='bundle'
-alias be='bundle exec'
-
-comment "Add libv8 therubyracer to Gemfile"
-notes <<EOF
-Rails needs a JavaScript interpreter; use Google's V8 engine.
-EOF
-if ! egrep -sq -e "^gem 'libv8'" Gemfile
-then
-  all "cat <<EOF >> Gemfile
-gem 'libv8'
-gem 'therubyracer'
-EOF"
-fi
-
-comment "Other gems."
-notes <<EOF
-  * Newer version of webrick doesn't generate so many warnings.
-  * Disable asset logging.
-EOF
-if ! egrep -sq -e "^gem 'webrick'" Gemfile
-then
-  all "cat <<EOF >> Gemfile
-gem 'webrick', '~> 1.3.0'
-gem 'disable_assets_logger', :group => :development
-EOF"
-fi
-
-comment bundle install
-notes <<EOF
-"bundle install" installs all gems in the Gemfile.
-
-It maintains a list of dependencies in the Gemfile.lock.
-EOF
-all bundle install
-
-comment Create a $app_name database user that can create new databases.
-notes <<EOF
-This rake task creates a local PostgreSQL database user named "$app_name".
-EOF
-if PGHOST=localhost PGUSER=$app_name PGPASSWORD=$app_name psql -c 'select 1;' >/dev/null 2>&1
-then
-  comment Database user already exists.
-else
-  all "cat <<EOF | sudo -u postgres psql
-CREATE ROLE $app_name SUPERUSER LOGIN PASSWORD '$app_name';
-CREATE DATABASE $app_name OWNER $app_name;
-EOF"
-fi
-all export PGHOST=localhost PGUSER=$app_name PGPASSWORD=$app_name
-
-comment Setup config/database.yml.
-notes <<EOF
-The database.yml file contains ActiveRecord configuration to connect to the DB.
-EOF
-all "sed -e 's!@app_name@!$app_name!g' $progdir/lib/rails/config/database.yml >config/database.yml"
-
-notes "---"
-view_file config/database.yml -10
-
-comment Drop database.
-notes <<EOF
-Rails databases are configurable for different environments,
-selected by \$RAILS_ENV.
-
- * development
- * test
- * production
-
-"rake db:drop:all" will drop the development and test database.
-EOF
-all bundle exec rake db:drop:all || true
-
-comment Create database.
-notes <<EOF
-"rake db:create:all" will create the development and test database.
-EOF
-all bundle exec rake db:create:all
+source "$progdir/lib/rails/rails-new.sh"
+source "$progdir/lib/rails/$rails_database_adapter.sh"
 
 comment "Start a the rails server."
 notes <<EOF
