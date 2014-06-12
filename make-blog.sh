@@ -728,6 +728,13 @@ comment "ALL DONE!"
 notes <<EOF
 We are finished!
 Questions?
+
+TO DO:
+
+  * /posts/:id/edit
+     (Hint: reuse <form> from views/posts/new.html.erb in a "partial")
+  * Improve navigation.
+     (Hint: create a header/footer layout partials)
 EOF
 prompt=1
 prompt "QUIT?" "q"
