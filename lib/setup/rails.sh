@@ -14,13 +14,6 @@ EOF
 all 'gem_check libv8 || gem install libv8'
 all 'gem_check therubyracer || gem install therubyracer'
 
-comment Install Sqlite3 system libraries.
-notes <<EOF
-The sqlite3 gem links against libsqlite3 system libraries.
-EOF
-debian 'sudo apt-get install -y libsqlite3-dev'
-osx    'false TODO'
-
 comment Install sqlite3 gem.
 notes <<EOF
 Sqlite3 is the default ActiveRecord database under Rails.
