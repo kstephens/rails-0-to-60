@@ -79,7 +79,7 @@ notes() {
 }
 notes_i=0
 show_notes() {
-  if [ -n "$NOTES_TTY" -a -n "$prompt" ]
+  if [ -n "$NOTES_LOG" ]
   then
     local doc="$(cat <<EOF
 
@@ -99,7 +99,7 @@ EOF
       notes_prev="$_show_notes_prev"
       _show_notes_prev="$doc"
       (
-        if [ "$NOTES_TTY" != "$(tty)" ]
+        if [ "$NOTES_LOG" != "$(tty)" ]
         then
           echo "${_vt_CLRSCR}${_vt_HOME}"
           echo "$notes_prev"
@@ -107,7 +107,7 @@ EOF
           echo "${_vt_RED}###################################################${_vt_NORM}"
         fi
         echo "$doc"
-      ) | tee $NOTES_TTY >/dev/null
+      ) | tee -a $NOTES_LOG >/dev/null
     fi
   fi
 }

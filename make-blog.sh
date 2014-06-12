@@ -99,7 +99,9 @@ fi
 
 comment bundle install
 notes <<EOF
-bundle install" installs all gems in the Gemfile.
+"bundle install" installs all gems in the Gemfile.
+
+It maintains a list of dependencies in the Gemfile.lock.
 EOF
 all bundle install
 
@@ -183,12 +185,13 @@ Rails can generate many files based on standard (or optional) boilerplate.
 
 Generate a controller for a blog post with an "index" action.
 
-The "index" action will render "/welcome".
+The controller will be named WelcomeController.
+It will have an action method "index".
 EOF
 all bundle exec rails generate controller welcome index
 
 notes <<EOF
-A Rails "route" tells the web server how to route URLs to the appropriate Rails Controller.
+A Rails "route" tells the web server how to route URLs to the Controller#action.
 
 Routes are defined in config/routes.rb.
 EOF
@@ -197,6 +200,8 @@ view_file config/routes.rb
 comment 'Add route for root to welcome#index.'
 notes <<EOF
 The "root" route directs "$url_base/" to the appropriate Controller.
+
+Both "$url_base" and "$url_base/welcome" will be routed to WelcomeController#index.
 EOF
 all "cat <<EOF > config/routes.rb
 Blog::Application.routes.draw do
@@ -390,6 +395,9 @@ ok cat app/models/post.rb
 
 comment See generated DB migration.
 notes <<EOF
+"t.timestamps" adds created_at and updated_at timestamp columns.
+
+The created_at/updated_at timestamps are automatically set by ActiveRecord.
 
 EOF
 ok cat db/migrate/*_create_posts.rb
@@ -586,14 +594,20 @@ notes <<EOF
 EOF
 all POST $url_base/posts "'post[title]=rails-0-to-60 is AWESOME!'" "'post[text]=https://github.com/kstephens/rails-0-to-60'" 
 
-comment Link from posts/:id/show to posts/.
+comment Link from posts/:id to posts/.
 notes <<EOF
 Add a navigation link back to index action.
+Show the Post#created_at.
 EOF
 all 'cat <<EOF > app/views/posts/show.html.erb
 <p>
   <strong>Title:</strong>
   <%= @post.title %>
+</p>
+
+<p>
+  <strong>Created At:</strong>
+  <%= @post.created_at.iso8601 %>
 </p>
  
 <p>
@@ -603,10 +617,118 @@ all 'cat <<EOF > app/views/posts/show.html.erb
 
 <%= link_to "Posts", action: :index %><br />
 EOF'
+all "browse $url_base/posts/1"
+
+comment Get $url_base/posts
+notes <<EOF
+Lists new post.
+EOF
+all "browse $url_base/posts"
+
+comment List more Post attributes.
+notes <<EOF
+Show Post#id and #created_at.
+EOF
+all 'cat <<EOF > app/views/posts/index.html.erb
+<h1>Listing posts</h1>
+
+<%= link_to "New Post", action: :new %><br />
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Title</th>
+    <th>Posted</th>
+  </tr>
+ 
+  <% @posts.each do |post| %>
+    <tr>
+      <td><%= post.id %></td>
+      <td><%= post.title %></td>
+      <td><%= post.created_at.iso8601 %></td>
+    </tr>
+  <% end %>
+</table>
+EOF'
+all "browse $url_base/posts"
+
+comment Submit New Post
+notes <<EOF
+Another Post
+EOF
+all POST $url_base/posts "'post[title]=Second Post'" "'post[text]=Lorum Ipsom'" 
+all "browse $url_base/posts"
+
+cat <<COMMENT >/dev/null
+comment Use RESTful resource routes for posts.
+notes <<EOF
+Rails RESTful routes use the "resource" shorthand.
+EOF
+all 'cat <<EOF > config/routes.rb
+Blog::Application.routes.draw do
+  get "welcome/index"
+  resource :posts
+  root :to => "welcome#index"
+end
+EOF'
+COMMENT
+all 'bundle exec rake routes'
+
+comment Link to post.
+notes <<EOF
+Show the Post#id.
+Link to show each Post.
+EOF
+all 'cat <<EOF > app/views/posts/index.html.erb
+<h1>Listing posts</h1>
+
+<%= link_to "New Post", action: :new %><br />
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Title</th>
+    <th>Posted</th>
+    <th></th>
+  </tr>
+ 
+  <% @posts.each do |post| %>
+    <tr>
+      <td><%= post.id %></td>
+      <td><%= post.title %></td>
+      <td><%= post.created_at.iso8601 %></td>
+      <td><%= link_to "Show", action: :show, id: post %></td>
+    </tr>
+  <% end %>
+</table>
+EOF'
+all "browse $url_base/posts"
+
+comment Sort posts from newest to oldest.
+notes <<EOF
+EOF
+all 'cat <<EOF > app/controllers/posts_controller.rb
+class PostsController < ApplicationController
+  def new
+  end
+  def create
+    @post = Post.new(params[:post])
+    @post.save
+    redirect_to action: :show, id: @post.id
+  end
+  def show
+    @post = Post.find(params[:id])
+  end
+  def index
+    @posts = Post.scoped.order("created_at desc")
+  end
+end
+EOF'
+all "browse $url_base/posts"
 
 comment "ALL DONE!"
 notes <<EOF
 We are finished!
+Questions?
 EOF
-prompt "EXIT?" "y"
+prompt=1
+prompt "QUIT?" "q"
 

@@ -38,7 +38,16 @@ Edit /etc/network/interfaces to include where # is your host only adapter:
     address 192.168.56.xx # Where xx is not already in use on your system
     netmask 255.255.255.0
 
-## From here on everything should be completed in your vm
+The default Host-Only IP for your VirtualBox VM is 192.156.56.101.
+
+## The ability to SSH into your VM.
+
+It's not recommended to use the VM's virtual console.  Ensure that
+your VM is responding to ssh:
+
+    ssh YOUR-VM-USERNAME@192.156.56.101
+
+# Within your VM:
 
 ## git installed
 
@@ -73,8 +82,11 @@ Remember to add your user to /etc/sudoers
     # you might want to move it out of the way, temporarily.
     $ [ -d ~/.rvm ] && mv ~/.rvm{,.save}
 
+    # To see the play-by-play notes:
+    $ export NOTES_LOG=<<some-file-or-tty>>
+    
     # To see what it's gonna do:
-    $ ./setup-rails.sh
+    $ ./setup-rails.sh prompt=
 
     # Really do it, and prompt along the way:
     $ ./setup-rails.sh dryrun= prompt=1
