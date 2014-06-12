@@ -16,11 +16,14 @@ stop_server
 url_port=3000
 url_base="http://${hostname}:${url_port}"
 app_name="blog"
+rails_new_options="-d postgresql"
 
 comment "Follow along in http://edgeguides.rubyonrails.org/getting_started.html"
 
 comment "Load RVM functions."
 . ~/.rvm/scripts/rvm
+
+#################################
 
 set -e
 
@@ -30,12 +33,12 @@ all mkdir -p ~/local/src
 comment "cd ~/local/src"
 all cd ~/local/src
 
-if ! [ -d blog ]
+if ! [ -d $app_name ]
 then
-  comment Create blog app.
+  comment Create $app_name app.
   notes <<EOF
 "rails new" creates a new Rails project directory.
-"-d postgresql" configures the Rails project to use PostgreSQL with ActiveRecord.
+"$rails_new_options" configures the Rails project to use PostgreSQL with ActiveRecord.
 
 This new project directory contains: 
 
@@ -62,12 +65,12 @@ tmp/           -- Temporary files.
 vendor/        -- Locally installed gems and libraries.
 
 EOF
-  all "rails new blog -d postgresql"
+  all "rails new $app_name $rails_new_options"
 fi
 
 notes <<EOF
 EOF
-all  "cd blog"
+all  "cd $app_name"
 
 comment Bundler.
 notes <<EOF
@@ -119,26 +122,26 @@ It maintains a list of dependencies in the Gemfile.lock.
 EOF
 all bundle install
 
-comment Create a blog database user that can create new databases.
+comment Create a $app_name database user that can create new databases.
 notes <<EOF
-This rake task creates a local PostgreSQL database user named "blog".
+This rake task creates a local PostgreSQL database user named "$app_name".
 EOF
-if PGHOST=localhost PGUSER=blog PGPASSWORD=blog psql -c 'select 1;' >/dev/null 2>&1
+if PGHOST=localhost PGUSER=$app_name PGPASSWORD=$app_name psql -c 'select 1;' >/dev/null 2>&1
 then
   comment Database user already exists.
 else
   all "cat <<EOF | sudo -u postgres psql
-CREATE ROLE blog SUPERUSER LOGIN PASSWORD 'blog';
-CREATE DATABASE blog OWNER blog;
+CREATE ROLE $app_name SUPERUSER LOGIN PASSWORD '$app_name';
+CREATE DATABASE $app_name OWNER $app_name;
 EOF"
 fi
-all export PGHOST=localhost PGUSER=blog PGPASSWORD=blog
+all export PGHOST=localhost PGUSER=$app_name PGPASSWORD=$app_name
 
 comment Setup config/database.yml.
 notes <<EOF
 The database.yml file contains ActiveRecord configuration to connect to the DB.
 EOF
-all "cp $progdir/lib/blog/config/database.yml config/"
+all "cp $progdir/lib/$app_name/config/database.yml config/"
 
 notes "---"
 view_file config/database.yml -10
